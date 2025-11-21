@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biblioteca Universitária</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📚 Biblioteca Universitária</h1>
+        <p>Sistema de Gestão de Acervo</p>
+      </header>
+
+      <div class="main-grid">
+        <section class="card">
+          <h2>Novo Livro</h2>
+          <form id="bookForm">
+            <div class="form-group">
+              <label>Título</label>
+              <input
+                type="text"
+                id="titulo"
+                required
+                placeholder="Ex: Dom Casmurro"
+              />
+            </div>
+            <div class="form-group">
+              <label>Autor (ID)</label>
+              <input
+                type="number"
+                id="autor"
+                required
+                placeholder="ID do Autor (crie um antes)"
+              />
+            </div>
+            <div class="form-group">
+              <label>Gênero</label>
+              <input type="text" id="genero" placeholder="Ex: Romance" />
+            </div>
+            <div class="form-group">
+              <label>Estoque</label>
+              <input type="number" id="estoque" required value="1" />
+            </div>
+            <div class="form-group">
+              <label>Páginas</label>
+              <input type="number" id="paginas" required />
+            </div>
+            <div class="form-group">
+              <label>Data Publicação</label>
+              <input type="date" id="dataPublicacao" required />
+            </div>
+            <div class="form-group">
+              <label>URL da Capa</label>
+              <input type="url" id="capa" placeholder="http://..." />
+            </div>
+            <div class="form-group">
+              <label>Descrição</label>
+              <textarea id="descricao" rows="3"></textarea>
+            </div>
+            <button type="submit">Cadastrar Livro</button>
+          </form>
+          <div
+            style="
+              margin-top: 20px;
+              padding: 10px;
+              background: #e3f2fd;
+              border-radius: 8px;
+              font-size: 0.9rem;
+            "
+          >
+            <strong>Dica:</strong> Para testar, crie um Autor primeiro via API
+            (`/api/autores/`) ou pelo Django Admin (`/admin`), pois o campo
+            Autor exige um ID válido.
+          </div>
+        </section>
+
+        <section>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 20px;
+            "
+          >
+            <h2>Acervo Disponível</h2>
+            <button
+              onclick="loadBooks()"
+              style="width: auto; background: #4caf50"
+            >
+              Atualizar Lista
+            </button>
+          </div>
+          <div id="bookContainer" class="book-list">
+            <p>Carregando...</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
