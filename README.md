@@ -1,106 +1,129 @@
-# 📚 Biblioteca Universitária - Sistema de Gestão (Full Stack)
+# 📚 Sistema de Gestão de Biblioteca Universitária (SGBU)
 
-Sistema moderno para gerenciamento de acervo bibliotecário. O projeto integra uma API REST robusta em **Django Rest Framework** com um Frontend **SPA (Single Page Application)** responsivo, focado em experiência do usuário e automação de processos.
+Uma solução **Full Stack** completa para gerenciamento de acervos acadêmicos. O sistema combina uma API RESTful robusta construída com **Django** e uma interface Frontend **SPA (Single Page Application)** moderna, focado em agilidade, controle de dados e experiência do usuário.
 
 ## 📂 Estrutura de Diretórios
 
-├── biblioteca_config/      # Settings e URLConf principal
-├── core/                   # Aplicação Django
-│   ├── models.py           # Regras de Negócio (Property @status)
-│   ├── serializers.py      # Serialização e validação
-│   └── views.py            # ViewSets
-├── media/                  # Uploads de imagens (GitIgnore recomendado)
-├── index.html              # Frontend SPA
-├── popular_banco.py        # Script de Seed/Povoamento
-└── manage.py               # Utilitário CLI
+├── biblioteca_config/      # Configurações do Django (Settings, URLConf)
+├── core/                   # App Principal
+│   ├── models.py           # Modelos (Livro, Aluno, Emprestimo, Autor)
+│   ├── serializers.py      # Serialização e Validação de Dados
+│   └── views.py            # Lógica de Negócio (ViewSets)
+├── media/capas/            # Diretório de armazenamento de uploads
+├── index.html              # Frontend Unificado (SPA)
+├── popular_banco.py        # Script de Seed/Povoamento de Dados
+└── manage.py
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades do Sistema
 
-### Backend (API)
-* **Gestão Inteligente de Autores:** Cadastro automático de autores ("Upsert") via nome durante a criação do livro, eliminando a necessidade de gerenciar IDs manualmente.
-* **Status Dinâmico:** O campo `status` ("Disponível" ou "Emprestado") é calculado automaticamente com base na quantidade de itens disponíveis em estoque, sem redundância no banco de dados.
-* **Upload de Capas:** Suporte completo para upload e armazenamento de imagens via `ImageField`.
-* **CRUD Completo:** Endpoints para Livros, Autores e Pedidos.
-* **Povoamento Automático:** Script dedicado para popular o banco com 100 livros reais para testes imediatos.
+### 🖥️ Interface & Experiência do Usuário (Frontend)
+* **Navegação em Abas:** Organização lógica em três painéis:
+    1.  **Acervo:** Gestão completa dos livros.
+    2.  **Emprestados:** Monitoramento em tempo real de livros com alunos.
+    3.  **Histórico:** Log permanente de todas as movimentações (entradas e saídas).
+* **Busca em Tempo Real:** Barra de pesquisa inteligente que filtra livros por **Título**, **Autor** ou **Gênero** instantaneamente, sem recarregar a página.
+* **Visualização de Detalhes:** Clique em qualquer livro para ver uma ficha técnica completa, incluindo a **Capa do Livro**, sinopse, estoque e metadados.
+* **Gestão de Imagens:** Suporte para upload e visualização de capas de livros (`.jpg`, `.png`).
 
-### Frontend (Interface)
-* **Dashboard SPA:** Navegação fluida entre listagem e detalhes sem recarregamento.
-* **Visualização de Status:** Badges coloridas indicando disponibilidade imediata na listagem.
-* **Nomenclatura Amigável:** Exibição de "Disponíveis" ao invés de "Estoque" técnico.
-* **Filtros e Ordenação:** Busca em tempo real e ordenação por título, autor ou disponibilidade.
-* **Modais Interativos:** Formulários de cadastro e pedidos em modais sobrepostos.
-* **Autocomplete:** Sugestão de autores existentes no banco durante o cadastro.
+### ⚙️ Regras de Negócio (Backend)
+* **Fluxo de Empréstimo:**
+    * Validação automática de estoque.
+    * Identificação flexível de alunos por **CPF** ou **Nome**.
+    * Baixa automática no estoque ao emprestar.
+* **Fluxo de Devolução:**
+    * Restaurar o estoque automaticamente.
+    * O registro não é excluído, mas arquivado com a data de devolução preenchida (Histórico).
+* **Gestão de Entidades:**
+    * **Livros:** CRUD completo com exclusão em massa (Bulk Delete) via checkboxes.
+    * **Autores:** Cadastro inteligente ("Upsert") — se o autor já existe, o sistema vincula; se não, cria um novo.
+    * **Alunos:** Base de dados completa com CPF, Nome, Curso e Turma.
+* **Status Dinâmico:** O sistema calcula automaticamente se um livro está "Disponível" (Verde) ou "Alugado" (Vermelho) com base no estoque atual.
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Backend:** Python 3, Django 5, Django Rest Framework (DRF), Pillow.
-* **Banco de Dados:** SQLite 3 (Padrão, portável).
-* **Frontend:** HTML5 Semântico, CSS3 (Grid/Flexbox, Glassmorphism), JavaScript Vanilla (ES6+).
+### Backend
+* **Linguagem:** Python 3.10+
+* **Framework:** Django 5
+* **API:** Django Rest Framework (DRF)
+* **Banco de Dados:** SQLite 3
+* **Processamento de Imagem:** Pillow
 
-## ⚙️ Pré-requisitos
-
-* Python 3.8+
-* Pip (Gerenciador de pacotes)
+### Frontend
+* **Estrutura:** HTML5 Semântico
+* **Estilo:** CSS3 (Flexbox, Grid, Glassmorphism UI)
+* **Lógica:** JavaScript (ES6+, Fetch API, FormData)
 
 ## 📦 Guia de Instalação
 
-### 1. Clone e Prepare o Ambiente
+### 1. Clone o Repositório
 ```bash
-git clone [https://github.com/seu-usuario/biblioteca-universitaria.git](https://github.com/seu-usuario/biblioteca-universitaria.git)
-cd biblioteca-universitaria
+git clone [https://github.com/paulorpb/bibliotecaDjango.git](https://github.com/paulorpb/bibliotecaDjango.git)
+cd bibliotecaDjango
+```
 
-# Windows
+### 2. Configure o Ambiente Virtual 
+
+#### Windows
+```bash
 python -m venv venv
 venv\Scripts\activate
+```
 
-# Linux/Mac
+#### Linux/Mac
+```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Instale as Dependências
+### 3. Instale as Dependências
 ```bash
 pip install django djangorestframework django-cors-headers Pillow
 ```
 
-### 3. Migração do Banco de Dados
+### 4. Prepare o Banco de Dados
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 4. (Opcional) Povoar com Dados de Teste
-Gere 100 livros automaticamente (Clássicos, Best-sellers, Técnicos) executando o script na raiz do projeto:
+### 5. (Opcional) Popule com Dados de Teste
+Gere automaticamente 100 Livros e 100 Alunos fictícios para testar todas as funcionalidades imediatamente:
 
 ```bash
 python popular_banco.py
 ```
 
-### 5. Execute o Servidor
+### 6. Execute o Projeto
 ```bash
 python manage.py runserver
 ```
 
 Acesse a aplicação em: `http://127.0.0.1:8000/` (Abra o arquivo `index.html` no navegador se não estiver servindo o estático via Django Templates).
 
-## 🔗 Documentação da API
-Endpoints Principais
+## 📖 Manual de Uso Rápido
+**Gerenciar Livros**
+- **Cadastrar:** Clique em "Novo Livro". Preencha os dados e anexe uma imagem de capa. O autor será buscado ou criado automaticamente.
+- **Excluir:** Na tabela do Acervo, selecione as caixas de seleção (checkbox) à esquerda dos livros desejados e clique em "Excluir Selecionados".
+- **Detalhes:** Clique sobre o texto de qualquer linha da tabela para abrir a visualização detalhada.
+
+**Realizar Empréstimo**
+1. Na aba **Acervo**, clique em "Emprestar".
+2. Escolha um livro disponível na lista.
+3. Digite o **CPF** (ou Nome) do aluno.
+4. Confirme. O livro sairá do estoque e aparecerá na aba Emprestados.
+
+**Realizar Devolução**
+1. Vá até a aba **Emprestados**.
+2. Localize o empréstimo e clique no botão "Devolver" na linha correspondente.
+3. Confirme a ação. O livro voltará ao estoque e o registro moverá para a aba Histórico.
+
+## 🔗 Endpoints da API
+A aplicação expõe uma API RESTful completa em `/api/`.
 
 | **Método** | **Endpoint** |	**Descrição** |
 | ---------- | ------------ | ------------- |
-|  GET  | `/api/livros/ ` | Lista todos os livros com campo status calculado.      |
-|  POST | `/api/livros/`  |	Cria livro (Multipart/Form-data para imagem).          |
-|  GET  |	`/api/autores/ `|	Lista autores (usado no autocomplete).                 |
-|  POST | `/api/pedidos/` |	Registra um pedido de livro.                           |
-
-Exemplo de Objeto Livro (JSON):
-
-{
-    "id": 1,
-    "titulo": "Dom Casmurro",
-    "autor_detalhes": { "id": 5, "nome": "Machado de Assis" },
-    "estoque": 3,
-    "status": "Disponível",  // Campo calculado (Read-Only)
-    "capa_do_livro": "[http://127.0.0.1:8000/media/capas/dom_casmurro.jpg](http://127.0.0.1:8000/media/capas/dom_casmurro.jpg)",
-    "genero": "Romance,Clássico"
-}
+|  GET  | `/api/livros/ ` | Lista livros com status e URLs de imagem.    |
+|  POST | `/api/livros/`  |	Cria livro (Multipart Form Data).          |
+|  GET  |	`/api/alunos/ `|	Lista alunos cadastrados.                |
+|  POST | `/api/emprestimos/` |	Registra saída de livro.                           |
+|  POST | `/api/emprestimos/devolver` |	Ação personalizada para dar baixa em empréstimos. |
