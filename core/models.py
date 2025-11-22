@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from datetime import date
 
 class Autor(models.Model):
     nome = models.CharField(max_length=255, unique=True) # Unique para evitar duplicatas exatas
@@ -30,15 +31,14 @@ class Aluno(models.Model):
     curso = models.CharField(max_length=100)
     turma = models.CharField(max_length=50)
 
-    def __str__(self):
-        return f"{self.nome} ({self.cpf})"
+    def __str__(self): return f"{self.nome} ({self.cpf})"
 
 class Emprestimo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    livro = models.ForeignKey(Livro, on_delete=models.CASCADE)
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE) # Vínculo com Aluno
+    livro = models.ForeignKey('Livro', on_delete=models.CASCADE)
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
     data_emprestimo = models.DateTimeField(auto_now_add=True)
-    # Removemos 'pais' e 'quantidade' para simplificar o conceito de empréstimo único
-    
+    data_devolucao = models.DateTimeField(null=True, blank=True) # Novo Campo
+
     def __str__(self):
-        return f"{self.aluno.nome} pegou {self.livro.titulo}"
+        return f"{self.aluno.nome} - {self.livro.titulo}"

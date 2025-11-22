@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biblioteca Universitária</title>
+    <title>Gestão Bibliotecária</title>
     <link rel="stylesheet" href="styles.css" />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -13,132 +13,130 @@
   <body>
     <div class="container">
       <header>
-        <h1>📚 Biblioteca Universitária</h1>
+        <h1>📚 Sistema de Biblioteca</h1>
       </header>
 
-      <div id="homeView">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('acervo')">
+          📖 Acervo
+        </button>
+        <button class="tab-btn" onclick="switchTab('emprestados')">
+          ⏳ Emprestados
+        </button>
+        <button class="tab-btn" onclick="switchTab('historico')">
+          📜 Histórico
+        </button>
+      </div>
+
+      <div id="acervo" class="tab-content active">
         <div class="toolbar">
           <div class="search-box">
-            <i class="material-icons">search</i>
             <input
               type="text"
-              id="searchInput"
-              placeholder="Pesquisar..."
+              id="searchBook"
+              placeholder="Pesquisar livro..."
               onkeyup="filterBooks()"
             />
           </div>
-
           <button class="btn-primary" onclick="openModal('bookModal')">
-            <i class="material-icons">add</i> Cadastrar Livro
+            <i class="material-icons">add</i> Novo Livro
           </button>
-
-          <button class="btn-danger" onclick="deleteSelectedBooks()">
-            <i class="material-icons">delete</i> Excluir Livro
+          <button class="btn-success" onclick="openModal('loanModal')">
+            <i class="material-icons">arrow_forward</i> Emprestar
           </button>
-
-          <button class="btn-accent" onclick="openModal('loanModal')">
-            <i class="material-icons">person_add</i> Registrar Empréstimo
+          <button class="btn-warning" onclick="openModal('returnModal')">
+            <i class="material-icons">arrow_back</i> Devolver
           </button>
         </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 40px">
-                  <input
-                    type="checkbox"
-                    id="selectAll"
-                    onchange="toggleAll(this)"
-                  />
-                </th>
-                <th>Título</th>
-                <th>Autor</th>
-                <th>Gênero</th>
-                <th>Disponíveis</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="bookTableBody"></tbody>
-          </table>
-        </div>
+        <table id="tableAcervo">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Autor</th>
+              <th>Disp.</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
 
-      <div id="detailView">
+      <div id="emprestados" class="tab-content">
+        <h3>Livros atualmente com alunos</h3>
         <button
-          style="
-            background: none;
-            border: 1px solid #ccc;
-            color: #333;
-            margin-bottom: 20px;
-          "
-          onclick="showHome()"
+          class="btn-warning"
+          style="margin-bottom: 15px"
+          onclick="openModal('returnModal')"
         >
-          Voltar
+          <i class="material-icons">assignment_return</i> Realizar Devolução
         </button>
-        <div class="detail-header">
-          <img id="detImg" src="" class="detail-img" />
-          <div class="detail-info">
-            <h2 id="detTitle"></h2>
-            <p>Autor: <span id="detAuthor"></span></p>
-            <p>
-              Status: <span id="detStatus" style="font-weight: bold"></span>
-            </p>
-            <p>Estoque: <span id="detStock"></span></p>
-            <p
-              id="detDesc"
-              style="margin-top: 20px; color: #555; line-height: 1.6"
-            ></p>
-          </div>
-        </div>
+        <table id="tableAtivos">
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Livro</th>
+              <th>Data Empréstimo</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="historico" class="tab-content">
+        <h3>Histórico de Empréstimos e Devoluções</h3>
+        <table id="tableHistorico">
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Livro</th>
+              <th>Empréstimo</th>
+              <th>Devolução</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
 
     <div id="bookModal" class="modal-overlay">
       <div class="modal">
-        <span class="close-modal" onclick="closeModal('bookModal')"
-          >&times;</span
-        >
-        <h2>Novo Livro</h2>
+        <h3>Cadastrar Livro</h3>
         <form id="bookForm">
           <div class="form-group">
             <label>Título</label
             ><input type="text" name="titulo" class="form-control" required />
           </div>
           <div class="form-group">
-            <label>Autor</label>
-            <input
+            <label>Autor</label
+            ><input
               type="text"
               name="autor_nome"
-              list="authorsList"
               class="form-control"
               required
             />
-            <datalist id="authorsList"></datalist>
           </div>
           <div class="form-group">
-            <label>Gêneros</label>
-            <div class="genre-grid" id="genreOptions"></div>
+            <label>Gênero</label
+            ><input type="text" name="genero" class="form-control" required />
           </div>
-          <div style="display: flex; gap: 15px">
-            <div class="form-group" style="flex: 1">
-              <label>Estoque</label
-              ><input
-                type="number"
-                name="estoque"
-                class="form-control"
-                required
-              />
-            </div>
-            <div class="form-group" style="flex: 1">
-              <label>Páginas</label
-              ><input
-                type="number"
-                name="paginas"
-                class="form-control"
-                required
-              />
-            </div>
+          <div class="form-group">
+            <label>Estoque</label
+            ><input
+              type="number"
+              name="estoque"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Páginas</label
+            ><input
+              type="number"
+              name="paginas"
+              class="form-control"
+              required
+            />
           </div>
           <div class="form-group">
             <label>Data Pub.</label
@@ -150,33 +148,34 @@
             />
           </div>
           <div class="form-group">
-            <label>Capa</label
-            ><input type="file" name="capa_do_livro" class="form-control" />
-          </div>
-          <div class="form-group">
             <label>Descrição</label
-            ><textarea
-              name="descricao"
-              class="form-control"
-              rows="3"
-            ></textarea>
+            ><textarea name="descricao" class="form-control"></textarea>
           </div>
-          <button type="submit" class="btn-primary" style="width: 100%">
-            Salvar
-          </button>
+          <div style="display: flex; gap: 10px; margin-top: 15px">
+            <button type="submit" class="btn-primary" style="flex: 1">
+              Salvar
+            </button>
+            <button
+              type="button"
+              class="btn-danger"
+              onclick="closeModal('bookModal')"
+            >
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
     </div>
 
     <div id="loanModal" class="modal-overlay">
       <div class="modal">
-        <span class="close-modal" onclick="closeModal('loanModal')"
-          >&times;</span
-        >
-        <h2>📚 Novo Empréstimo</h2>
+        <h3>Registrar Empréstimo</h3>
+        <p style="font-size: 0.9rem; color: #666">
+          Selecione o livro e identifique o aluno.
+        </p>
         <form id="loanForm">
           <div class="form-group">
-            <label>Livro Solicitado</label>
+            <label>Livro</label>
             <select
               id="loanBookSelect"
               name="livro"
@@ -184,52 +183,108 @@
               required
             ></select>
           </div>
-
-          <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee" />
-          <h3 style="font-size: 1rem; color: #666; margin-bottom: 15px">
-            Dados do Aluno
-          </h3>
-
+          <hr />
           <div class="form-group">
-            <label>CPF (Apenas números)</label>
+            <label>CPF do Aluno</label>
             <input
               type="text"
               name="aluno_cpf"
               class="form-control"
               placeholder="000.000.000-00"
-              required
             />
           </div>
-
+          <div
+            style="
+              text-align: center;
+              margin: -10px 0 10px;
+              font-size: 0.8rem;
+              color: #888;
+            "
+          >
+            - OU -
+          </div>
           <div class="form-group">
-            <label>Nome Completo</label>
+            <label>Nome do Aluno</label>
             <input
               type="text"
               name="aluno_nome"
               class="form-control"
-              placeholder="Preencher se for novo aluno"
+              placeholder="Nome Completo"
             />
           </div>
-
-          <div style="display: flex; gap: 15px">
-            <div class="form-group" style="flex: 1">
-              <label>Data Nascimento</label>
-              <input type="date" name="aluno_nascimento" class="form-control" />
-            </div>
-            <div class="form-group" style="flex: 1">
-              <label>Turma</label>
-              <input type="text" name="aluno_turma" class="form-control" />
-            </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px">
+            <button type="submit" class="btn-success" style="flex: 1">
+              Confirmar
+            </button>
+            <button
+              type="button"
+              class="btn-danger"
+              onclick="closeModal('loanModal')"
+            >
+              Fechar
+            </button>
           </div>
+        </form>
+      </div>
+    </div>
 
+    <div id="returnModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Devolver Livro</h3>
+        <p style="font-size: 0.9rem; color: #666">
+          Informe os dados para localizar o empréstimo.
+        </p>
+        <form id="returnForm">
           <div class="form-group">
-            <label>Curso</label>
-            <input type="text" name="aluno_curso" class="form-control" />
+            <label>Livro a Devolver</label>
+            <select
+              id="returnBookSelect"
+              name="livro_id"
+              class="form-control"
+              required
+            ></select>
           </div>
-
-          <button type="submit" class="btn-accent" style="width: 100%">
-            Confirmar Empréstimo
-          </button>
+          <hr />
+          <div class="form-group">
+            <label>Confirmar CPF</label>
+            <input
+              type="text"
+              name="cpf"
+              class="form-control"
+              placeholder="000.000.000-00"
+            />
+          </div>
+          <div
+            style="
+              text-align: center;
+              margin: -10px 0 10px;
+              font-size: 0.8rem;
+              color: #888;
+            "
+          >
+            - OU -
+          </div>
+          <div class="form-group">
+            <label>Confirmar Nome</label>
+            <input
+              type="text"
+              name="nome"
+              class="form-control"
+              placeholder="Nome do Aluno"
+            />
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px">
+            <button type="submit" class="btn-warning" style="flex: 1">
+              Devolver
+            </button>
+            <button
+              type="button"
+              class="btn-danger"
+              onclick="closeModal('returnModal')"
+            >
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
     </div>

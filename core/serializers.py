@@ -36,58 +36,46 @@ class AlunoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EmprestimoSerializer(serializers.ModelSerializer):
-    # Campos para receber os dados do aluno no mesmo formulário
-    aluno_cpf = serializers.CharField(write_only=True)
+    aluno_cpf = serializers.CharField(write_only=True, required=False)
     aluno_nome = serializers.CharField(write_only=True, required=False)
-    aluno_nascimento = serializers.DateField(write_only=True, required=False)
-    aluno_curso = serializers.CharField(write_only=True, required=False)
-    aluno_turma = serializers.CharField(write_only=True, required=False)
-
-    # Mostrar detalhes na resposta
+    
+    # Campos de leitura para exibir na tabela
     aluno_detalhes = AlunoSerializer(source='aluno', read_only=True)
     livro_titulo = serializers.ReadOnlyField(source='livro.titulo')
+    livro_capa = serializers.ImageField(source='livro.capa_do_livro', read_only=True)
 
     class Meta:
         model = Emprestimo
-        fields = ['id', 'livro', 'livro_titulo', 'data_emprestimo', 
-                  'aluno_detalhes', 'aluno_cpf', 'aluno_nome', 
-                  'aluno_nascimento', 'aluno_curso', 'aluno_turma']
+        fields = ['id', 'livro', 'livro_titulo', 'livro_capa', 'data_emprestimo', 
+                  'data_devolucao', 'aluno_detalhes', 'aluno_cpf', 'aluno_nome']
+
+    def validate(self, data):
+        # Validação: Pelo menos um dos dois deve vir
+        if not data.get('aluno_cpf') and not data.get('aluno_nome'):
+            raise serializers.ValidationError("Informe o CPF ou o Nome do aluno.")
+        return data
 
     def create(self, validated_data):
-        # 1. Extrair dados do aluno
-        cpf = validated_data.pop('aluno_cpf')
-        nome = validated_data.pop('aluno_nome', '')
-        nasc = validated_data.pop('aluno_nascimento', None)
-        curso = validated_data.pop('aluno_curso', '')
-        turma = validated_data.pop('aluno_turma', '')
+        cpf = validated_data.pop('aluno_cpf', None)
+        nome = validated_data.pop('aluno_nome', None)
         livro = validated_data.get('livro')
 
-        # 2. Verificar Estoque
+        # 1. Buscar Aluno (Lógica de Prioridade: CPF > Nome)
+        aluno = None
+        if cpf:
+            aluno = Aluno.objects.filter(cpf=cpf).first()
+        elif nome:
+            aluno = Aluno.objects.filter(nome__iexact=nome).first()
+
+        if not aluno:
+            raise serializers.ValidationError("Aluno não encontrado no sistema.")
+
+        # 2. Validar Estoque
         if livro.estoque <= 0:
-            raise serializers.ValidationError("Este livro não está disponível no momento.")
+            raise serializers.ValidationError("Livro indisponível.")
 
-        # 3. Lógica Upsert do Aluno (Busca por CPF, se não achar, cria)
-        aluno_obj, created = Aluno.objects.get_or_create(
-            cpf=cpf,
-            defaults={
-                'nome': nome,
-                'data_nascimento': nasc,
-                'curso': curso,
-                'turma': turma
-            }
-        )
-
-        # Se o aluno já existia mas mandaram dados novos, podemos atualizar (opcional)
-        if not created and nome:
-            aluno_obj.nome = nome
-            aluno_obj.curso = curso
-            aluno_obj.turma = turma
-            aluno_obj.save()
-
-        # 4. Baixar Estoque
+        # 3. Executar Empréstimo
         livro.estoque -= 1
         livro.save()
-
-        # 5. Criar Empréstimo
-        emprestimo = Emprestimo.objects.create(aluno=aluno_obj, **validated_data)
-        return emprestimo
+        
+        return Emprestimo.objects.create(aluno=aluno, **validated_data)

@@ -1,184 +1,196 @@
 const API_BASE = "http://127.0.0.1:8000/api/";
-let booksData = [];
+let booksCache = [];
 
-const genres = ["Ficção", "Romance", "Técnico", "História", "Sci-Fi"];
+// --- NAVEGAÇÃO (TABS) ---
+function switchTab(tabId) {
+  // UI Tabs
+  document
+    .querySelectorAll(".tab-btn")
+    .forEach((b) => b.classList.remove("active"));
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((c) => c.classList.remove("active"));
 
-function init() {
-  loadBooks();
-  loadAuthors();
-  renderGenreCheckboxes();
+  // Ativar atual
+  document
+    .querySelector(`button[onclick="switchTab('${tabId}')"]`)
+    .classList.add("active");
+  document.getElementById(tabId).classList.add("active");
+
+  // Recarregar dados específicos
+  if (tabId === "acervo") loadBooks();
+  if (tabId === "emprestados") loadLoans();
+  if (tabId === "historico") loadLoans();
 }
 
-// --- MANIPULAÇÃO DA DOM AUXILIAR ---
-function renderGenreCheckboxes() {
-  document.getElementById("genreOptions").innerHTML = genres
+// --- CARREGAMENTO DE DADOS ---
+
+async function loadBooks() {
+  const res = await fetch(API_BASE + "livros/");
+  booksCache = await res.json();
+
+  // Popula Tabela Acervo
+  const tbody = document.querySelector("#tableAcervo tbody");
+  tbody.innerHTML = booksCache
     .map(
-      (g) => `
-            <label><input type="checkbox" value="${g}" name="generos"> ${g}</label>
+      (b) => `
+            <tr>
+                <td>${b.titulo}</td>
+                <td>${b.autor_detalhes.nome}</td>
+                <td>${b.estoque}</td>
+                <td><span class="badge ${
+                  b.status === "Disponível" ? "disp" : "alug"
+                }">${b.status}</span></td>
+            </tr>
+        `
+    )
+    .join("");
+
+  // Popula Selects (Empréstimo e Devolução)
+  const options = booksCache
+    .map((b) => `<option value="${b.id}">${b.titulo}</option>`)
+    .join("");
+  document.getElementById("loanBookSelect").innerHTML = options;
+  document.getElementById("returnBookSelect").innerHTML = options;
+}
+
+async function loadLoans() {
+  const res = await fetch(API_BASE + "emprestimos/");
+  const loans = await res.json();
+
+  // Filtrar Ativos vs Histórico
+  const ativos = loans.filter((l) => l.data_devolucao === null);
+  const historico = loans.filter((l) => l.data_devolucao !== null);
+
+  // Renderizar Ativos
+  document.querySelector("#tableAtivos tbody").innerHTML = ativos
+    .map(
+      (l) => `
+            <tr>
+                <td>${l.aluno_detalhes.nome} <small>(${
+        l.aluno_detalhes.cpf
+      })</small></td>
+                <td>${l.livro_titulo}</td>
+                <td>${new Date(l.data_emprestimo).toLocaleDateString()}</td>
+                <td><button class="btn-warning" style="padding:5px 10px; font-size:0.8rem" onclick="quickReturn('${
+                  l.aluno_detalhes.cpf
+                }', ${l.livro})">Devolver</button></td>
+            </tr>
+        `
+    )
+    .join("");
+
+  // Renderizar Histórico
+  document.querySelector("#tableHistorico tbody").innerHTML = historico
+    .map(
+      (l) => `
+            <tr>
+                <td>${l.aluno_detalhes.nome}</td>
+                <td>${l.livro_titulo}</td>
+                <td>${new Date(l.data_emprestimo).toLocaleDateString()}</td>
+                <td><span class="badge dev">${new Date(
+                  l.data_devolucao
+                ).toLocaleDateString()}</span></td>
+            </tr>
         `
     )
     .join("");
 }
 
-window.openModal = (id) => (document.getElementById(id).style.display = "flex");
-window.closeModal = (id) =>
-  (document.getElementById(id).style.display = "none");
-window.toggleAll = (source) => {
-  document
-    .querySelectorAll(".book-check")
-    .forEach((cb) => (cb.checked = source.checked));
-};
+// --- ACTIONS (POST) ---
 
-// --- API CALLS ---
-
-// 1. Load Books (Com Checkboxes)
-async function loadBooks() {
-  const res = await fetch(API_BASE + "livros/");
-  booksData = await res.json();
-  renderTable(booksData);
-
-  // Popula select do Empréstimo apenas com livros disponíveis
-  const available = booksData.filter((b) => b.estoque > 0);
-  document.getElementById("loanBookSelect").innerHTML = available
-    .map(
-      (b) => `<option value="${b.id}">${b.titulo} (${b.estoque} disp.)</option>`
-    )
-    .join("");
-}
-
-function renderTable(data) {
-  const tbody = document.getElementById("bookTableBody");
-  tbody.innerHTML = "";
-  data.forEach((book) => {
-    const tr = document.createElement("tr");
-    const statusClass =
-      book.status === "Disponível" ? "status-disponivel" : "status-alugado";
-
-    // Checkbox na primeira célula
-    // Click no TR abre detalhes, Click no Checkbox seleciona (stopPropagation)
-    tr.innerHTML = `
-                <td><input type="checkbox" class="book-check" value="${book.id}" onclick="event.stopPropagation()"></td>
-                <td onclick="showDetail(${book.id})">${book.titulo}</td>
-                <td onclick="showDetail(${book.id})">${book.autor_detalhes.nome}</td>
-                <td onclick="showDetail(${book.id})">${book.genero}</td>
-                <td onclick="showDetail(${book.id})" style="text-align:center">${book.estoque}</td>
-                <td onclick="showDetail(${book.id})"><span class="status-badge ${statusClass}">${book.status}</span></td>
-            `;
-    tbody.appendChild(tr);
-  });
-}
-
-// 2. Excluir Livros (Múltiplos)
-async function deleteSelectedBooks() {
-  const checked = Array.from(
-    document.querySelectorAll(".book-check:checked")
-  ).map((cb) => cb.value);
-
-  if (checked.length === 0) {
-    alert("Selecione pelo menos um livro na tabela para excluir.");
-    return;
-  }
-
-  if (!confirm(`Tem certeza que deseja excluir ${checked.length} livro(s)?`))
-    return;
-
-  // Delete em loop (Para simplicidade, em prod seria um endpoint bulk)
-  for (let id of checked) {
-    await fetch(`${API_BASE}livros/${id}/`, { method: "DELETE" });
-  }
-
-  loadBooks();
-  alert("Livros excluídos com sucesso!");
-  document.getElementById("selectAll").checked = false;
-}
-
-// 3. Criar Empréstimo
+// 1. Emprestar
 document.getElementById("loanForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // Validar se dados do aluno foram preenchidos (Exemplo simples)
-  if (data.aluno_nome === "" && data.aluno_curso === "") {
-    // Nota: O Backend aceita buscar só pelo CPF, mas o UX ideal pediria confirmação
-    // Deixaremos passar, assumindo que o aluno já existe se o usuário não preencheu o resto
+  if (!data.aluno_cpf && !data.aluno_nome) {
+    alert("Preencha CPF ou Nome!");
+    return;
   }
 
   try {
     const res = await fetch(API_BASE + "emprestimos/", {
-      // Note a mudança de rota
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
 
     if (res.ok) {
-      alert("Empréstimo registrado com sucesso!");
+      alert("Empréstimo realizado!");
       closeModal("loanModal");
       e.target.reset();
-      loadBooks(); // Atualiza estoque na tabela
+      switchTab("emprestados"); // Vai para a aba de emprestados
     } else {
       const err = await res.json();
-      alert("Erro: " + JSON.stringify(err));
+      alert("Erro: " + JSON.stringify(err)); // Provavelmente "Aluno não encontrado"
     }
-  } catch (error) {
+  } catch (e) {
     alert("Erro de conexão");
   }
 });
 
-// 4. Cadastro de Livro (Mantido do anterior, simplificado aqui)
-async function loadAuthors() {
-  /* ... Mesma lógica ... */
-  const res = await fetch(API_BASE + "autores/");
-  const authors = await res.json();
-  document.getElementById("authorsList").innerHTML = authors
-    .map((a) => `<option value="${a.nome}">`)
-    .join("");
-}
-
-document.getElementById("bookForm").addEventListener("submit", async (e) => {
+// 2. Devolver (Formulário)
+document.getElementById("returnForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  const checkedGenres = Array.from(
-    document.querySelectorAll('input[name="generos"]:checked')
-  )
-    .map((cb) => cb.value)
-    .join(",");
-  formData.append("genero", checkedGenres);
+  const data = Object.fromEntries(formData.entries());
+  await executeReturn(data);
+});
 
+// Devolver (Atalho botão tabela)
+async function quickReturn(cpf, livroId) {
+  if (!confirm("Confirmar devolução rápida?")) return;
+  await executeReturn({ cpf: cpf, livro_id: livroId });
+}
+
+async function executeReturn(data) {
+  try {
+    const res = await fetch(API_BASE + "emprestimos/devolver/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      alert("Livro devolvido com sucesso!");
+      closeModal("returnModal");
+      document.getElementById("returnForm").reset();
+      loadLoans(); // Atualiza tabelas
+    } else {
+      const err = await res.json();
+      alert("Erro: " + (err.erro || JSON.stringify(err)));
+    }
+  } catch (e) {
+    alert("Erro de conexão");
+  }
+}
+
+// 3. Cadastrar Livro (Mantido simples)
+document.getElementById("bookForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  // ... (Mesma lógica anterior para criar livro) ...
+  const formData = new FormData(e.target);
   await fetch(API_BASE + "livros/", { method: "POST", body: formData });
   closeModal("bookModal");
-  e.target.reset();
   loadBooks();
 });
 
-// Detalhes (SPA logic)
-function showDetail(id) {
-  const book = booksData.find((b) => b.id == id);
-  document.getElementById("homeView").classList.add("hidden");
-  document.getElementById("detailView").style.display = "block";
-  document.getElementById("detTitle").textContent = book.titulo;
-  document.getElementById("detAuthor").textContent = book.autor_detalhes.nome;
-  document.getElementById("detStock").textContent = book.estoque;
-  document.getElementById("detStatus").textContent = book.status;
-  document.getElementById("detStatus").style.color =
-    book.status === "Disponível" ? "green" : "red";
-  document.getElementById("detDesc").textContent = book.descricao;
-  document.getElementById("detImg").src =
-    book.capa_do_livro || "https://via.placeholder.com/300x450";
-}
-
-function showHome() {
-  document.getElementById("detailView").style.display = "none";
-  document.getElementById("homeView").classList.remove("hidden");
-}
-
+// Filtro de Acervo
 function filterBooks() {
-  const term = document.getElementById("searchInput").value.toLowerCase();
-  const filtered = booksData.filter((b) =>
-    b.titulo.toLowerCase().includes(term)
-  );
-  renderTable(filtered);
+  const term = document.getElementById("searchBook").value.toLowerCase();
+  const rows = document.querySelectorAll("#tableAcervo tbody tr");
+  rows.forEach((row) => {
+    const txt = row.innerText.toLowerCase();
+    row.style.display = txt.includes(term) ? "" : "none";
+  });
 }
 
-init();
+// Utilitários Modal
+window.openModal = (id) => (document.getElementById(id).style.display = "flex");
+window.closeModal = (id) =>
+  (document.getElementById(id).style.display = "none");
+
+// Iniciar na aba Acervo
+loadBooks();
