@@ -3,7 +3,7 @@
 Uma solução **Full Stack** completa para gerenciamento de acervos acadêmicos. O sistema combina uma API RESTful robusta construída com **Django** e uma interface Frontend **SPA (Single Page Application)** moderna, focado em agilidade, controle de dados e experiência do usuário.
 
 ## 📂 Estrutura de Diretórios
-
+```
 ├── biblioteca_config/      # Configurações do Django (Settings, URLConf)
 ├── core/                   # App Principal
 │   ├── models.py           # Modelos (Livro, Aluno, Emprestimo, Autor)
@@ -13,6 +13,7 @@ Uma solução **Full Stack** completa para gerenciamento de acervos acadêmicos.
 ├── index.html              # Frontend Unificado (SPA)
 ├── popular_banco.py        # Script de Seed/Povoamento de Dados
 └── manage.py
+```
 
 ## 🚀 Funcionalidades do Sistema
 
