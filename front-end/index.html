@@ -13,133 +13,213 @@
   <body>
     <div class="container">
       <header>
-        <h1>📚 Sistema de Biblioteca</h1>
+        <h1>📚 Sistema Bibliotecário Integrado</h1>
       </header>
 
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('acervo')">
-          📖 Acervo
-        </button>
-        <button class="tab-btn" onclick="switchTab('emprestados')">
-          ⏳ Emprestados
-        </button>
-        <button class="tab-btn" onclick="switchTab('historico')">
-          📜 Histórico
-        </button>
-      </div>
-
-      <div id="acervo" class="tab-content active">
-        <div class="toolbar">
-          <div class="search-box">
-            <input
-              type="text"
-              id="searchBook"
-              placeholder="Pesquisar livro..."
-              onkeyup="filterBooks()"
-            />
-          </div>
-          <button class="btn-primary" onclick="openModal('bookModal')">
-            <i class="material-icons">add</i> Novo Livro
+      <div id="tabsContainer">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('acervo')">
+            📖 Acervo
           </button>
-          <button class="btn-success" onclick="openModal('loanModal')">
-            <i class="material-icons">arrow_forward</i> Emprestar
+          <button class="tab-btn" onclick="switchTab('emprestados')">
+            ⏳ Emprestados
           </button>
-          <button class="btn-warning" onclick="openModal('returnModal')">
-            <i class="material-icons">arrow_back</i> Devolver
+          <button class="tab-btn" onclick="switchTab('historico')">
+            📜 Histórico
           </button>
         </div>
-        <table id="tableAcervo">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Disp.</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+
+        <div id="acervo" class="tab-content active">
+          <div class="toolbar">
+            <div class="search-box">
+              <i class="material-icons search-icon">search</i>
+              <input
+                type="text"
+                id="searchBook"
+                placeholder="Pesquisar título, autor ou gênero..."
+                onkeyup="filterBooks()"
+              />
+            </div>
+
+            <button class="btn-primary" onclick="openModal('bookModal')">
+              <i class="material-icons">add_circle</i> Novo Livro
+            </button>
+            <button class="btn-danger" onclick="deleteSelectedBooks()">
+              <i class="material-icons">delete</i> Excluir Selecionados
+            </button>
+            <div
+              style="border-left: 1px solid #ccc; height: 30px; margin: 0 10px"
+            ></div>
+            <button class="btn-success" onclick="openModal('loanModal')">
+              <i class="material-icons">person_add</i> Emprestar
+            </button>
+          </div>
+
+          <table id="tableAcervo">
+            <thead>
+              <tr>
+                <th style="width: 40px">
+                  <input
+                    type="checkbox"
+                    id="selectAll"
+                    onchange="toggleAll(this)"
+                  />
+                </th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Gênero</th>
+                <th>Disponíveis</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="emprestados" class="tab-content">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 20px;
+            "
+          >
+            <h3>Livros em Posse de Alunos</h3>
+            <button class="btn-warning" onclick="openModal('returnModal')">
+              <i class="material-icons">assignment_return</i> Realizar Devolução
+              Manual
+            </button>
+          </div>
+          <table id="tableAtivos">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Livro</th>
+                <th>Desde</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="historico" class="tab-content">
+          <h3>Histórico Completo de Movimentações</h3>
+          <table id="tableHistorico">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Livro</th>
+                <th>Empréstimo</th>
+                <th>Devolução</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
-      <div id="emprestados" class="tab-content">
-        <h3>Livros atualmente com alunos</h3>
-        <button
-          class="btn-warning"
-          style="margin-bottom: 15px"
-          onclick="openModal('returnModal')"
-        >
-          <i class="material-icons">assignment_return</i> Realizar Devolução
+      <div id="detailView">
+        <button class="btn-outline" onclick="closeDetails()">
+          <i class="material-icons">arrow_back</i> Voltar para o Acervo
         </button>
-        <table id="tableAtivos">
-          <thead>
-            <tr>
-              <th>Aluno</th>
-              <th>Livro</th>
-              <th>Data Empréstimo</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
 
-      <div id="historico" class="tab-content">
-        <h3>Histórico de Empréstimos e Devoluções</h3>
-        <table id="tableHistorico">
-          <thead>
-            <tr>
-              <th>Aluno</th>
-              <th>Livro</th>
-              <th>Empréstimo</th>
-              <th>Devolução</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div class="detail-layout">
+          <img id="detImg" src="" class="detail-img" alt="Capa do Livro" />
+
+          <div class="detail-info">
+            <h2 id="detTitle">Título do Livro</h2>
+            <div class="detail-meta">
+              <strong>Autor:</strong> <span id="detAuthor"></span>
+            </div>
+            <div class="detail-meta">
+              <strong>Status:</strong> <span id="detStatus"></span>
+            </div>
+            <div class="detail-meta">
+              <strong>Estoque Atual:</strong>
+              <span id="detStock"></span> unidades
+            </div>
+            <div class="detail-meta">
+              <strong>Páginas:</strong> <span id="detPages"></span>
+            </div>
+            <div class="detail-meta">
+              <strong>Publicação:</strong> <span id="detDate"></span>
+            </div>
+
+            <div style="margin: 20px 0">
+              <strong>Gêneros:</strong>
+              <div id="detGenres" style="margin-top: 5px"></div>
+            </div>
+
+            <div
+              style="
+                background: #f9f9f9;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid var(--secondary);
+              "
+            >
+              <strong>Sinopse:</strong>
+              <p
+                id="detDesc"
+                style="line-height: 1.6; color: #555; margin-bottom: 0"
+              ></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div id="bookModal" class="modal-overlay">
       <div class="modal">
-        <h3>Cadastrar Livro</h3>
+        <h3>Novo Livro</h3>
         <form id="bookForm">
           <div class="form-group">
             <label>Título</label
             ><input type="text" name="titulo" class="form-control" required />
           </div>
           <div class="form-group">
-            <label>Autor</label
-            ><input
+            <label>Autor</label>
+            <input
               type="text"
               name="autor_nome"
+              list="authorsList"
               class="form-control"
               required
+              placeholder="Busque ou crie um novo..."
             />
+            <datalist id="authorsList"></datalist>
           </div>
+
           <div class="form-group">
-            <label>Gênero</label
-            ><input type="text" name="genero" class="form-control" required />
+            <label>Gêneros</label>
+            <div class="genre-grid" id="genreOptions"></div>
           </div>
-          <div class="form-group">
-            <label>Estoque</label
-            ><input
-              type="number"
-              name="estoque"
-              class="form-control"
-              required
-            />
+
+          <div style="display: flex; gap: 15px">
+            <div class="form-group" style="flex: 1">
+              <label>Estoque</label
+              ><input
+                type="number"
+                name="estoque"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Páginas</label
+              ><input
+                type="number"
+                name="paginas"
+                class="form-control"
+                required
+              />
+            </div>
           </div>
+
           <div class="form-group">
-            <label>Páginas</label
-            ><input
-              type="number"
-              name="paginas"
-              class="form-control"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Data Pub.</label
+            <label>Data Publicação</label
             ><input
               type="date"
               name="data_publicacao"
@@ -147,13 +227,29 @@
               required
             />
           </div>
+
+          <div class="form-group">
+            <label>Capa do Livro (Imagem)</label>
+            <input
+              type="file"
+              name="capa_do_livro"
+              class="form-control"
+              accept=".jpg,.jpeg,.png"
+            />
+          </div>
+
           <div class="form-group">
             <label>Descrição</label
-            ><textarea name="descricao" class="form-control"></textarea>
+            ><textarea
+              name="descricao"
+              class="form-control"
+              rows="3"
+            ></textarea>
           </div>
-          <div style="display: flex; gap: 10px; margin-top: 15px">
+
+          <div style="display: flex; gap: 10px; margin-top: 20px">
             <button type="submit" class="btn-primary" style="flex: 1">
-              Salvar
+              Salvar Livro
             </button>
             <button
               type="button"
@@ -170,12 +266,9 @@
     <div id="loanModal" class="modal-overlay">
       <div class="modal">
         <h3>Registrar Empréstimo</h3>
-        <p style="font-size: 0.9rem; color: #666">
-          Selecione o livro e identifique o aluno.
-        </p>
         <form id="loanForm">
           <div class="form-group">
-            <label>Livro</label>
+            <label>Livro (Disponíveis)</label>
             <select
               id="loanBookSelect"
               name="livro"
@@ -196,12 +289,12 @@
           <div
             style="
               text-align: center;
-              margin: -10px 0 10px;
-              font-size: 0.8rem;
               color: #888;
+              font-size: 0.8rem;
+              margin: -10px 0 10px;
             "
           >
-            - OU -
+            OU
           </div>
           <div class="form-group">
             <label>Nome do Aluno</label>
@@ -212,28 +305,28 @@
               placeholder="Nome Completo"
             />
           </div>
-          <div style="display: flex; gap: 10px; margin-top: 15px">
-            <button type="submit" class="btn-success" style="flex: 1">
-              Confirmar
-            </button>
-            <button
-              type="button"
-              class="btn-danger"
-              onclick="closeModal('loanModal')"
-            >
-              Fechar
-            </button>
-          </div>
+          <button
+            type="submit"
+            class="btn-success"
+            style="width: 100%; margin-top: 10px"
+          >
+            Confirmar Saída
+          </button>
+          <button
+            type="button"
+            class="btn-outline"
+            style="width: 100%; margin-top: 10px; justify-content: center"
+            onclick="closeModal('loanModal')"
+          >
+            Cancelar
+          </button>
         </form>
       </div>
     </div>
 
     <div id="returnModal" class="modal-overlay">
       <div class="modal">
-        <h3>Devolver Livro</h3>
-        <p style="font-size: 0.9rem; color: #666">
-          Informe os dados para localizar o empréstimo.
-        </p>
+        <h3>Registrar Devolução</h3>
         <form id="returnForm">
           <div class="form-group">
             <label>Livro a Devolver</label>
@@ -246,45 +339,28 @@
           </div>
           <hr />
           <div class="form-group">
-            <label>Confirmar CPF</label>
-            <input
-              type="text"
-              name="cpf"
-              class="form-control"
-              placeholder="000.000.000-00"
-            />
-          </div>
-          <div
-            style="
-              text-align: center;
-              margin: -10px 0 10px;
-              font-size: 0.8rem;
-              color: #888;
-            "
-          >
-            - OU -
+            <label>Confirmar CPF</label
+            ><input type="text" name="cpf" class="form-control" />
           </div>
           <div class="form-group">
-            <label>Confirmar Nome</label>
-            <input
-              type="text"
-              name="nome"
-              class="form-control"
-              placeholder="Nome do Aluno"
-            />
+            <label>Confirmar Nome</label
+            ><input type="text" name="nome" class="form-control" />
           </div>
-          <div style="display: flex; gap: 10px; margin-top: 15px">
-            <button type="submit" class="btn-warning" style="flex: 1">
-              Devolver
-            </button>
-            <button
-              type="button"
-              class="btn-danger"
-              onclick="closeModal('returnModal')"
-            >
-              Cancelar
-            </button>
-          </div>
+          <button
+            type="submit"
+            class="btn-warning"
+            style="width: 100%; margin-top: 10px"
+          >
+            Confirmar Devolução
+          </button>
+          <button
+            type="button"
+            class="btn-outline"
+            style="width: 100%; margin-top: 10px; justify-content: center"
+            onclick="closeModal('returnModal')"
+          >
+            Cancelar
+          </button>
         </form>
       </div>
     </div>
