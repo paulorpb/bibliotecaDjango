@@ -58,7 +58,7 @@ Uma solução **Full Stack** completa para gerenciamento de acervos acadêmicos.
 
 ### 1. Clone o Repositório
 ```bash
-git clone [https://github.com/paulorpb/bibliotecaDjango.git](https://github.com/paulorpb/bibliotecaDjango.git)
+git clone https://github.com/paulorpb/bibliotecaDjango.git
 cd bibliotecaDjango
 ```
 
