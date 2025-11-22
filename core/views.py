@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import Autor, Livro, Pedido
-from .serializers import AutorSerializer, LivroSerializer, PedidoSerializer
+from .models import Autor, Livro, Emprestimo, Aluno
+from .serializers import AutorSerializer, LivroSerializer, EmprestimoSerializer, AlunoSerializer
 
 class AutorViewSet(viewsets.ModelViewSet):
     queryset = Autor.objects.all()
@@ -10,6 +10,10 @@ class LivroViewSet(viewsets.ModelViewSet):
     queryset = Livro.objects.all()
     serializer_class = LivroSerializer
 
-class PedidoViewSet(viewsets.ModelViewSet):
-    queryset = Pedido.objects.all()
-    serializer_class = PedidoSerializer
+class EmprestimoViewSet(viewsets.ModelViewSet):
+    queryset = Emprestimo.objects.all()
+    serializer_class = EmprestimoSerializer
+
+class AlunoViewSet(viewsets.ModelViewSet):
+    queryset = Aluno.objects.all()
+    serializer_class = AlunoSerializer

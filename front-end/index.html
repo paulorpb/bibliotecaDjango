@@ -5,98 +5,232 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Biblioteca Universitária</title>
     <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div class="container">
       <header>
         <h1>📚 Biblioteca Universitária</h1>
-        <p>Sistema de Gestão de Acervo</p>
       </header>
 
-      <div class="main-grid">
-        <section class="card">
-          <h2>Novo Livro</h2>
-          <form id="bookForm">
-            <div class="form-group">
-              <label>Título</label>
-              <input
-                type="text"
-                id="titulo"
-                required
-                placeholder="Ex: Dom Casmurro"
-              />
-            </div>
-            <div class="form-group">
-              <label>Autor (ID)</label>
-              <input
-                type="number"
-                id="autor"
-                required
-                placeholder="ID do Autor (crie um antes)"
-              />
-            </div>
-            <div class="form-group">
-              <label>Gênero</label>
-              <input type="text" id="genero" placeholder="Ex: Romance" />
-            </div>
-            <div class="form-group">
-              <label>Estoque</label>
-              <input type="number" id="estoque" required value="1" />
-            </div>
-            <div class="form-group">
-              <label>Páginas</label>
-              <input type="number" id="paginas" required />
-            </div>
-            <div class="form-group">
-              <label>Data Publicação</label>
-              <input type="date" id="dataPublicacao" required />
-            </div>
-            <div class="form-group">
-              <label>URL da Capa</label>
-              <input type="url" id="capa" placeholder="http://..." />
-            </div>
-            <div class="form-group">
-              <label>Descrição</label>
-              <textarea id="descricao" rows="3"></textarea>
-            </div>
-            <button type="submit">Cadastrar Livro</button>
-          </form>
-          <div
-            style="
-              margin-top: 20px;
-              padding: 10px;
-              background: #e3f2fd;
-              border-radius: 8px;
-              font-size: 0.9rem;
-            "
-          >
-            <strong>Dica:</strong> Para testar, crie um Autor primeiro via API
-            (`/api/autores/`) ou pelo Django Admin (`/admin`), pois o campo
-            Autor exige um ID válido.
+      <div id="homeView">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="material-icons">search</i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Pesquisar..."
+              onkeyup="filterBooks()"
+            />
           </div>
-        </section>
 
-        <section>
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 20px;
-            "
-          >
-            <h2>Acervo Disponível</h2>
-            <button
-              onclick="loadBooks()"
-              style="width: auto; background: #4caf50"
-            >
-              Atualizar Lista
-            </button>
+          <button class="btn-primary" onclick="openModal('bookModal')">
+            <i class="material-icons">add</i> Cadastrar Livro
+          </button>
+
+          <button class="btn-danger" onclick="deleteSelectedBooks()">
+            <i class="material-icons">delete</i> Excluir Livro
+          </button>
+
+          <button class="btn-accent" onclick="openModal('loanModal')">
+            <i class="material-icons">person_add</i> Registrar Empréstimo
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px">
+                  <input
+                    type="checkbox"
+                    id="selectAll"
+                    onchange="toggleAll(this)"
+                  />
+                </th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Gênero</th>
+                <th>Disponíveis</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="detailView">
+        <button
+          style="
+            background: none;
+            border: 1px solid #ccc;
+            color: #333;
+            margin-bottom: 20px;
+          "
+          onclick="showHome()"
+        >
+          Voltar
+        </button>
+        <div class="detail-header">
+          <img id="detImg" src="" class="detail-img" />
+          <div class="detail-info">
+            <h2 id="detTitle"></h2>
+            <p>Autor: <span id="detAuthor"></span></p>
+            <p>
+              Status: <span id="detStatus" style="font-weight: bold"></span>
+            </p>
+            <p>Estoque: <span id="detStock"></span></p>
+            <p
+              id="detDesc"
+              style="margin-top: 20px; color: #555; line-height: 1.6"
+            ></p>
           </div>
-          <div id="bookContainer" class="book-list">
-            <p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="bookModal" class="modal-overlay">
+      <div class="modal">
+        <span class="close-modal" onclick="closeModal('bookModal')"
+          >&times;</span
+        >
+        <h2>Novo Livro</h2>
+        <form id="bookForm">
+          <div class="form-group">
+            <label>Título</label
+            ><input type="text" name="titulo" class="form-control" required />
           </div>
-        </section>
+          <div class="form-group">
+            <label>Autor</label>
+            <input
+              type="text"
+              name="autor_nome"
+              list="authorsList"
+              class="form-control"
+              required
+            />
+            <datalist id="authorsList"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Gêneros</label>
+            <div class="genre-grid" id="genreOptions"></div>
+          </div>
+          <div style="display: flex; gap: 15px">
+            <div class="form-group" style="flex: 1">
+              <label>Estoque</label
+              ><input
+                type="number"
+                name="estoque"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Páginas</label
+              ><input
+                type="number"
+                name="paginas"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Data Pub.</label
+            ><input
+              type="date"
+              name="data_publicacao"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Capa</label
+            ><input type="file" name="capa_do_livro" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Descrição</label
+            ><textarea
+              name="descricao"
+              class="form-control"
+              rows="3"
+            ></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%">
+            Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="loanModal" class="modal-overlay">
+      <div class="modal">
+        <span class="close-modal" onclick="closeModal('loanModal')"
+          >&times;</span
+        >
+        <h2>📚 Novo Empréstimo</h2>
+        <form id="loanForm">
+          <div class="form-group">
+            <label>Livro Solicitado</label>
+            <select
+              id="loanBookSelect"
+              name="livro"
+              class="form-control"
+              required
+            ></select>
+          </div>
+
+          <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee" />
+          <h3 style="font-size: 1rem; color: #666; margin-bottom: 15px">
+            Dados do Aluno
+          </h3>
+
+          <div class="form-group">
+            <label>CPF (Apenas números)</label>
+            <input
+              type="text"
+              name="aluno_cpf"
+              class="form-control"
+              placeholder="000.000.000-00"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Nome Completo</label>
+            <input
+              type="text"
+              name="aluno_nome"
+              class="form-control"
+              placeholder="Preencher se for novo aluno"
+            />
+          </div>
+
+          <div style="display: flex; gap: 15px">
+            <div class="form-group" style="flex: 1">
+              <label>Data Nascimento</label>
+              <input type="date" name="aluno_nascimento" class="form-control" />
+            </div>
+            <div class="form-group" style="flex: 1">
+              <label>Turma</label>
+              <input type="text" name="aluno_turma" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Curso</label>
+            <input type="text" name="aluno_curso" class="form-control" />
+          </div>
+
+          <button type="submit" class="btn-accent" style="width: 100%">
+            Confirmar Empréstimo
+          </button>
+        </form>
       </div>
     </div>
 

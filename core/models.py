@@ -2,38 +2,43 @@ from django.db import models
 import uuid
 
 class Autor(models.Model):
-    # O Django cria automaticamente um id (Integer, PK), mas podemos explicitar se quiser
-    nome = models.CharField(max_length=255)
+    nome = models.CharField(max_length=255, unique=True) # Unique para evitar duplicatas exatas
 
-    def __str__(self):
-        return self.nome
-
-    class Meta:
-        verbose_name_plural = "Autores"
+    def __str__(self): return self.nome
 
 class Livro(models.Model):
-    titulo = models.CharField(max_length=255) # localized String simplificado
+    titulo = models.CharField(max_length=255)
     autor = models.ForeignKey(Autor, related_name='livros', on_delete=models.CASCADE)
     estoque = models.IntegerField()
-    descricao = models.TextField() # localized String simplificado
-    capa_do_livro = models.URLField(max_length=500) # URL da imagem
+    descricao = models.TextField()
+    capa_do_livro = models.ImageField(upload_to='capas/', blank=True, null=True)
     data_publicacao = models.DateField()
     paginas = models.IntegerField()
-    genero = models.CharField(max_length=100)
+    genero = models.CharField(max_length=255)
+
+    def __str__(self): return self.titulo
+
+    # NOVO: Propriedade dinâmica de status
+    @property
+    def status(self):
+        return "Disponível" if self.estoque > 0 else "Emprestado"
+
+class Aluno(models.Model):
+    cpf = models.CharField(max_length=14, primary_key=True) # Ex: 000.000.000-00
+    nome = models.CharField(max_length=255)
+    data_nascimento = models.DateField()
+    curso = models.CharField(max_length=100)
+    turma = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.titulo
+        return f"{self.nome} ({self.cpf})"
 
-class Pedido(models.Model):
-    # UUID como chave primária
+class Emprestimo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     livro = models.ForeignKey(Livro, on_delete=models.CASCADE)
-    pais = models.CharField(max_length=100) # Representando Country
-    quantidade = models.IntegerField()
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE) # Vínculo com Aluno
+    data_emprestimo = models.DateTimeField(auto_now_add=True)
+    # Removemos 'pais' e 'quantidade' para simplificar o conceito de empréstimo único
     
-    # Campos "managed" (controle de auditoria simples)
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
-
     def __str__(self):
-        return f"Pedido {self.id} - {self.livro.titulo}"
+        return f"{self.aluno.nome} pegou {self.livro.titulo}"
