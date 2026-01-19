@@ -38,7 +38,7 @@ class Emprestimo(models.Model):
     livro = models.ForeignKey('Livro', on_delete=models.CASCADE)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
     data_emprestimo = models.DateTimeField(auto_now_add=True)
-    data_devolucao = models.DateTimeField(null=True, blank=True) # Novo Campo
+    data_devolucao = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.aluno.nome} - {self.livro.titulo}"
